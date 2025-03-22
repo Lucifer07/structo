@@ -23,7 +23,7 @@ type Sample4 struct {
 }
 
 func main() {
-	structor := structo.NewStrackto()
+	structor := structo.NewStructo()
 
 	sampleData := Sample{
 		Name: "test",

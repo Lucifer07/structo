@@ -1,3 +1,16 @@
+/*
+Package structo provides functionality for encoding and decoding Go structures to and from binary data and string representations.
+It supports serialization and deserialization of basic data types, structures, and encrypted representations.
+
+Usage example:
+
+	s := structo.NewStructo()
+	data := MyStruct{Field1: 42, Field2: "Hello"}
+	binaryData, err := s.StructToBinary(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+*/
 package structo
 
 import (
@@ -11,6 +24,7 @@ import (
 	"github.com/Lucifer07/Structo/cha"
 )
 
+// Structo defines the interface for encoding and decoding structures.
 type Structo interface {
 	StructToBinary(data interface{}) ([]byte, error)
 	BinaryToStruct(data []byte, result interface{}) error
@@ -20,11 +34,13 @@ type Structo interface {
 	DecodeToStringSafe(data string, result interface{}) error
 }
 
+// structo is an implementation of the Structo interface.
 type structo struct {
 	bufferPool sync.Pool
 	encryptor  *cha.EncryptData
 }
 
+// NewStructo creates a new Structo instance.
 func NewStructo() Structo {
 	return &structo{
 		bufferPool: sync.Pool{
@@ -36,7 +52,7 @@ func NewStructo() Structo {
 	}
 }
 
-
+// StructToBinary converts a struct to a binary representation.
 func (s *structo) StructToBinary(data interface{}) ([]byte, error) {
 	buf := s.bufferPool.Get().(*bytes.Buffer)
 	buf.Reset()
@@ -48,7 +64,7 @@ func (s *structo) StructToBinary(data interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-
+// BinaryToStruct converts binary data back into a struct.
 func (s *structo) BinaryToStruct(data []byte, result interface{}) error {
 	if reflect.TypeOf(result).Kind() != reflect.Ptr {
 		return errors.New("must be a pointer")
@@ -57,7 +73,7 @@ func (s *structo) BinaryToStruct(data []byte, result interface{}) error {
 	return s.decodeValue(buf, reflect.ValueOf(result).Elem())
 }
 
-
+// EncodeToString converts a struct to a string representation.
 func (s *structo) EncodeToString(data interface{}) (string, error) {
 	binaryData, err := s.StructToBinary(data)
 	if err != nil {
@@ -66,12 +82,12 @@ func (s *structo) EncodeToString(data interface{}) (string, error) {
 	return string(binaryData), nil
 }
 
-
+// DecodeFromString converts a string representation back into a struct.
 func (s *structo) DecodeFromString(data string, result interface{}) error {
 	return s.BinaryToStruct([]byte(data), result)
 }
 
-
+// EncodeToStringSafe securely converts a struct to a string representation using encryption.
 func (s *structo) EncodeToStringSafe(data interface{}) (string, error) {
 	binaryData, err := s.StructToBinary(data)
 	if err != nil {
@@ -80,7 +96,7 @@ func (s *structo) EncodeToStringSafe(data interface{}) (string, error) {
 	return s.encryptor.Encrypt(binaryData)
 }
 
-
+// DecodeToStringSafe securely converts an encrypted string back into a struct.
 func (s *structo) DecodeToStringSafe(data string, result interface{}) error {
 	dataText, err := s.encryptor.Decrypt(data)
 	if err != nil {
@@ -89,7 +105,7 @@ func (s *structo) DecodeToStringSafe(data string, result interface{}) error {
 	return s.BinaryToStruct([]byte(dataText), result)
 }
 
-
+// encodeValue encodes a value into a binary format.
 func (s *structo) encodeValue(buf *bytes.Buffer, v reflect.Value) error {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -124,7 +140,7 @@ func (s *structo) encodeValue(buf *bytes.Buffer, v reflect.Value) error {
 	return nil
 }
 
-
+// decodeValue decodes binary data back into a struct field.
 func (s *structo) decodeValue(buf *bytes.Reader, v reflect.Value) error {
 	switch v.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:

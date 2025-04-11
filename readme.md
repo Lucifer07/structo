@@ -1,124 +1,158 @@
-# 🚀 Structo
+# Structo 🏗️  
+Go library for **struct serialization**, **diffing**, **change tracking**, and **default injection** with nested struct, pointer, slice, and encoding support.
 
-Structo is a lightweight and efficient Go package for serializing and deserializing structs into binary and string formats. It also provides encryption and deep copying capabilities.
+---
 
-## 📦 Installation
+## ✨ Features
 
-Install Structo using `go get`:
+- ✅ Encode/decode struct to string or binary
+- 🔄 Flatten dan unflatten nested struct
+- 📆 Inject default values to struct
+- 🕵️ Struct diffing and history tracking
+- ⟳ Copy between structs with different shapes
 
-```sh
-go get github.com/Lucifer07/structo
+---
+
+## 📦 Installations
+
+```bash
+go get github.com/Lucifer07/Structo
 ```
 
-## 🌟 Features
+---
 
-- Convert structs to binary format and vice versa.
-- Encode and decode to/from strings.
-- Secure encoding with encryption.
-- Deep copy struct data.
+## 🚀 Example
 
-## 🚀 Usage
-
-### Import Structo
+### Struct Sample
 
 ```go
-package main
-
-import (
-	"fmt"
-
-	structo "github.com/Lucifer07/structo"
-)
-```
-
-### Define Structs
-
-```go
-type Sample struct {
-	Name   string  `json:"name"`
-	Sample Sample2 `json:"sampleData"`
+type Address struct {
+	City    string `json:"city"`
+	ZipCode string `json:"zipCode"`
 }
 
-type Sample2 struct {
-	Number int `json:"number"`
+type Metadata struct {
+	Active  bool   `json:"active"`
+	Version string `json:"version"`
+}
+
+type User struct {
+	ID       int
+	Name     string
+	Email    *string
+	Tags     []string
+	Metadata Metadata
+	Address  *Address
 }
 ```
 
-### Encode and Decode Example
+---
+
+### 🔐 Encode & Decode
 
 ```go
-func main() {
-	structor := structo.NewStructo()
+conv := structo.NewConverter()
+encoded := conv.EncodeToString(user)
+conv.DecodeFromString(encoded, &user)
+```
 
-	sampleData := Sample{
-		Name: "test",
-		Sample: Sample2{
-			Number: 1,
-		},
+---
+
+### 🧱 Binary Encode & Decode
+
+```go
+bin := conv.StructToBinary(user)
+conv.BinaryToStruct(bin, &user)
+```
+
+---
+
+### 🔐 Safe Encode 
+
+```go
+encoded := conv.EncodeToStringSafe(user)
+conv.DecodeFromStringSafe(encoded, &user)
+```
+
+---
+
+### 🧬 Flatten & Unflatten
+
+```go
+flat := structo.Flatten(user)
+// map[string]any: {"Name":"Jane", "Address.City":"Jakarta", ...}
+
+var u User
+structo.Unflatten(flat, &u)
+```
+
+---
+
+### 🗓️ Diff Struct
+
+```go
+diff, _ := structo.Diff(oldUser, newUser)
+for field, values := range diff {
+	fmt.Printf("%s: %v -> %v\n", field, values[0], values[1])
+}
+```
+
+---
+
+### 📊 Track Changes (Add, Remove, Change)
+
+```go
+changes, _ := structo.TrackWithHistory(oldUser, newUser)
+for field, res := range changes {
+	switch res.Action {
+	case structo.Add:
+		fmt.Printf("%s: appended %v\n", field, res.Data.GetData())
+	case structo.Remove:
+		fmt.Printf("%s: removed %v\n", field, res.Data.GetData())
+	case structo.Change:
+		data := res.Data.GetData().([]any)
+		fmt.Printf("%s: changed from %v to %v\n", field, data[0], data[1])
 	}
-
-	fmt.Println("Original data:", sampleData)
-
-	// Encoding
-	encoded, err := structor.EncodeToString(sampleData)
-	if err != nil {
-		fmt.Println("Encoding error:", err)
-		return
-	}
-	fmt.Println("Encoded:", encoded)
-
-	// Decoding
-	var decoded Sample
-	err = structor.DecodeFromString(encoded, &decoded)
-	if err != nil {
-		fmt.Println("Decoding error:", err)
-		return
-	}
-	fmt.Println("Decoded:", decoded)
 }
 ```
 
-### Secure Encoding & Decoding Example
+---
+
+### ⟳ Copy Struct to a Different Shape
 
 ```go
-// Secure Encoding
-encodedSafe, err := structor.EncodeToStringSafe(sampleData)
-if err != nil {
-	fmt.Println("Encoding safe error:", err)
-	return
-}
-fmt.Println("Encoded Safe:", encodedSafe)
-
-// Secure Decoding
-var decodedSafe Sample
-err = structor.DecodeToStringSafe(encodedSafe, &decodedSafe)
-if err != nil {
-	fmt.Println("Decoding safe error:", err)
-	return
-}
-fmt.Println("Decoded Safe:", decodedSafe)
+var external ExternalUser
+structo.Copy(&external, user)
 ```
 
-### Struct Deep Copy Example
+---
+
+### ⚙️ Inject Default Values
 
 ```go
-type Sample3 struct {
-	Name   string  `json:"name"`
-	Sample Sample4 `json:"sampleData"`
+type Profile struct {
+	Name  string `default:"Anonymous"`
+	Age   int    `default:"18"`
+	Email string `default:"default@example.com"`
 }
-
-type Sample4 struct {
-	Number int `json:"number"`
-}
-
-var copied Sample3
-structo.Copy(&copied, sampleData)
-fmt.Println("Copied Struct:", copied)
+var p Profile
+structo.InjectDefaults(&p)
+// p.Name = "Anonymous", etc.
 ```
 
-## 📜 License
+---
 
-Structo is licensed under the MIT License.
+## 📁 Full Example
+
+view the `example/main.go` file for full example, runnable example.
+
+---
+
+## 📜 Lisensi
+
+MIT © Lucifer07
+
+---
 
 ## 💡 Contributions
 
@@ -127,4 +161,3 @@ Contributions are welcome! Feel free to open issues and pull requests to improve
 ---
 
 🔥 **Enjoy fast and secure struct serialization with Structo!**
-

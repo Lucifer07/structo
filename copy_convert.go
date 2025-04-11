@@ -1,10 +1,16 @@
-package copier
+package structo
 
 import (
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+type TypeConverter struct {
+	SrcType interface{}
+	DstType interface{}
+	Fn      func(src interface{}) (dst interface{}, err error)
+}
 
 var (
 	TimestampToTime = TypeConverter{
@@ -22,25 +28,9 @@ var (
 			return src.(*timestamppb.Timestamp).AsTime(), nil
 		},
 	}
-)
 
-var (
 	DefaultProtoConverters = []TypeConverter{
 		TimestampToTime,
 		TimeToTimestamp,
 	}
 )
-
-func WithOptionsProtobuf(options ...Option) Option {
-	option := Option{}
-	option.Converters = DefaultProtoConverters
-
-	if len(options) > 0 {
-		option.DeepCopy = options[0].DeepCopy
-		option.IgnoreEmpty = options[0].IgnoreEmpty
-		option.FieldNameMapping = options[0].FieldNameMapping
-		option.Converters = append(option.Converters, options[0].Converters...)
-	}
-
-	return option
-}
